@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ma Cotisation</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Cotisation">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --primary: #4F46E5;
+      --primary-dark: #3730A3;
+      --primary-light: #EEF2FF;
+      --secondary: #10B981;
+      --secondary-dark: #059669;
+      --secondary-light: #D1FAE5;
+      --danger: #EF4444;
+      --danger-light: #FEE2E2;
+      --bg: #F1F5F9;
+      --surface: #FFFFFF;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --radius: 16px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: flex; flex-direction: column; }
+
+    .auth-screen {
+      background: linear-gradient(160deg, #4F46E5 0%, #3730A3 60%, #1E1B6E 100%);
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .auth-card {
+      background: white;
+      border-radius: 24px;
+      padding: 2rem 1.75rem;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+    }
+
+    .auth-logo { font-size: 3rem; margin-bottom: 0.5rem; text-align: center; }
+    .auth-title { font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.2rem; text-align: center; }
+    .auth-subtitle { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.75rem; text-align: center; }
+
+    .pin-dots { display: flex; gap: 1.2rem; justify-content: center; margin-bottom: 2rem; }
+    .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--border); transition: all 0.15s; }
+    .pin-dot.filled { background: var(--primary); border-color: var(--primary); transform: scale(1.1); }
+
+    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .pin-key {
+      aspect-ratio: 1; border: none; border-radius: 50%; background: #F8FAFC;
+      font-size: 1.375rem; font-weight: 600; cursor: pointer; transition: all 0.1s;
+      display: flex; align-items: center; justify-content: center; color: var(--text);
+    }
+    .pin-key:active { transform: scale(0.88); background: var(--border); }
+    .pin-key.delete-key { background: transparent; color: var(--text-muted); font-size: 1.25rem; }
+    .pin-key.empty-key { visibility: hidden; pointer-events: none; }
+
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; }
+    input[type=text], input[type=number], input[type=date], select {
+      width: 100%; padding: 0.8rem 1rem; border: 2px solid var(--border); border-radius: 12px;
+      font-size: 1rem; color: var(--text); background: white; transition: border-color 0.2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+
+    .btn { width: 100%; padding: 0.9rem; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:active { transform: scale(0.97); background: var(--primary-dark); }
+
+    .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+    .app-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white; padding: 1rem 1.25rem; padding-top: calc(1rem + env(safe-area-inset-top));
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .header-info .app-title { font-size: 1.125rem; font-weight: 800; }
+    .header-info .app-sub { font-size: 0.75rem; opacity: 0.75; margin-top: 1px; }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.18); border: none; color: white; width: 38px; height: 38px;
+      border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;
+    }
+
+    .app-content {
+      flex: 1; padding: 1rem; padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px;
+      background: white; border-top: 1px solid var(--border); display: flex;
+      padding: 0.5rem 0; padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+      z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+    }
+    .tab-btn {
+      flex: 1; border: none; background: transparent; padding: 0.4rem 0; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      font-size: 0.65rem; font-weight: 600; color: var(--text-muted); transition: color 0.2s;
+    }
+    .tab-btn.active { color: var(--primary); }
+    .tab-icon { font-size: 1.4rem; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* SUMMARY */
+    .balance-card {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: var(--radius); padding: 1.75rem 1.5rem; color: white; margin-bottom: 1rem;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .balance-card::before {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 140px; height: 140px; background: rgba(255,255,255,0.08); border-radius: 50%;
+    }
+    .bal-lbl { font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; }
+    .bal-amt { font-size: 2.75rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+    .bal-curr { font-size: 0.875rem; opacity: 0.7; margin-top: 0.3rem; }
+
+    .shares-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .share-card { background: white; border-radius: 14px; padding: 1rem 0.875rem; box-shadow: var(--shadow); }
+    .share-badge { font-size: 1.25rem; margin-bottom: 0.4rem; }
+    .share-name { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+    .share-amt { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .share-pill { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .me-card .share-amt { color: var(--primary); }
+    .me-card .share-pill { background: var(--primary-light); color: var(--primary); }
+    .brother-card .share-amt { color: var(--secondary-dark); }
+    .brother-card .share-pill { background: var(--secondary-light); color: var(--secondary-dark); }
+
+    .prog-card { background: white; border-radius: 14px; padding: 1rem; box-shadow: var(--shadow); margin-bottom: 0.75rem; }
+    .prog-labels { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .prog-labels .me-c { color: var(--primary); }
+    .prog-labels .br-c { color: var(--secondary-dark); }
+    .prog-bar { height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; display: flex; }
+    .prog-me { background: var(--primary); transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+    .prog-br { background: var(--secondary); transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+    .stat-card { background: white; border-radius: 12px; padding: 0.875rem 0.5rem; text-align: center; box-shadow: var(--shadow); }
+    .stat-val { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+    .stat-lbl { font-size: 0.6rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+
+    /* ADD */
+    .add-card { background: white; border-radius: var(--radius); padding: 1.25rem; box-shadow: var(--shadow); }
+    .who-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem; }
+    .who-btn {
+      padding: 1rem 0.5rem; border: 2.5px solid var(--border); border-radius: 14px;
+      background: white; cursor: pointer; font-weight: 700; font-size: 0.9rem; transition: all 0.15s;
+      text-align: center; color: var(--text-muted);
+    }
+    .who-btn .wi { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+    .who-btn.me.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+    .who-btn.brother.active { background: var(--secondary-light); border-color: var(--secondary-dark); color: var(--secondary-dark); }
+
+    .amt-wrap { position: relative; }
+    .curr-pfx { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--text-muted); font-size: 0.875rem; pointer-events: none; }
+    .amt-wrap input { padding-left: 4rem; font-size: 1.4rem; font-weight: 700; }
+
+    /* HISTORY */
+    .history-empty { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+    .empty-icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
+    .empty-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+    .empty-sub { font-size: 0.8rem; }
+
+    .hist-month { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 1rem 0 0.5rem; padding-left: 4px; }
+    .hist-month:first-child { margin-top: 0; }
+
+    .dep-item {
+      background: white; border-radius: 14px; padding: 0.875rem 1rem; margin-bottom: 0.6rem;
+      display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .dep-av { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; flex-shrink: 0; }
+    .dep-av.me { background: var(--primary-light); color: var(--primary); }
+    .dep-av.brother { background: var(--secondary-light); color: var(--secondary-dark); }
+    .dep-info { flex: 1; min-width: 0; }
+    .dep-who { font-weight: 700; font-size: 0.9rem; }
+    .dep-date { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    .dep-note { font-size: 0.72rem; color: var(--text-muted); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dep-right { text-align: right; flex-shrink: 0; }
+    .dep-amt { font-weight: 800; font-size: 1rem; }
+    .dep-amt.me { color: var(--primary); }
+    .dep-amt.brother { color: var(--secondary-dark); }
+    .dep-curr { font-size: 0.65rem; color: var(--text-muted); }
+    .del-btn { background: none; border: none; color: #CBD5E1; cursor: pointer; padding: 6px; border-radius: 8px; font-size: 1rem; transition: color 0.2s; flex-shrink: 0; }
+    .del-btn:active { color: var(--danger); }
+
+    /* LOADING / TOAST */
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .spinner { width: 44px; height: 44px; border: 4px solid #E2E8F0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%);
+      background: #0F172A; color: white; padding: 0.7rem 1.5rem; border-radius: 100px;
+      font-size: 0.875rem; font-weight: 500; z-index: 500; white-space: nowrap;
+      animation: toast-up 0.25s ease;
+    }
+    @keyframes toast-up {
+      from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .err-msg { color: var(--danger); font-size: 0.8rem; text-align: center; margin-top: 0.6rem; min-height: 1.2em; }
+
+    .hint-box { font-size: 0.75rem; color: var(--text-muted); background: #F8FAFC; padding: 0.75rem; border-radius: 10px; margin-bottom: 1rem; }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748B'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 0.875rem center; background-size: 1.2em; padding-right: 2.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
+
+<!-- SETUP -->
+<div class="screen auth-screen" id="setupScreen">
+  <div class="auth-card">
+    <div class="auth-logo">💰</div>
+    <div class="auth-title">Bienvenue !</div>
+    <div class="auth-subtitle">Créez votre espace de cotisation familiale</div>
+
+    <div class="form-group">
+      <label>Votre prénom</label>
+      <input type="text" id="setupNameMe" placeholder="Ex: Tobias" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Prénom de votre frère</label>
+      <input type="text" id="setupNameBrother" placeholder="Ex: Didier" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Devise</label>
+      <select id="setupCurrency">
+        <option value="FCFA">FCFA — Franc CFA</option>
+        <option value="XAF">XAF — Franc CFA (BEAC)</option>
+        <option value="€">€ — Euro</option>
+        <option value="$">$ — Dollar</option>
+        <option value="CHF">CHF — Franc suisse</option>
+        <option value="MAD">MAD — Dirham marocain</option>
+      </select>
+    </div>
+    <div class="divider"></div>
+    <div class="form-group">
+      <label>Code PIN secret (4 chiffres)</label>
+      <input type="number" id="setupPin" placeholder="- - - -" maxlength="4" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Confirmer le PIN</label>
+      <input type="number" id="setupPinConfirm" placeholder="- - - -" maxlength="4" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="hint-box">🔒 Partagez ce PIN avec votre frère pour qu'il puisse accéder à l'application depuis son iPhone.</div>
+    <button class="btn btn-primary" onclick="submitSetup()">Créer mon espace →</button>
+    <div class="err-msg" id="setupError"></div>
+  </div>
+</div>
+
+<!-- PIN -->
+<div class="screen auth-screen" id="pinScreen">
+  <div class="auth-card">
+    <div class="auth-logo">🔐</div>
+    <div class="auth-title">Code PIN</div>
+    <div class="auth-subtitle">Entrez votre code à 4 chiffres</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="dot0"></div>
+      <div class="pin-dot" id="dot1"></div>
+      <div class="pin-dot" id="dot2"></div>
+      <div class="pin-dot" id="dot3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key empty-key"></button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key delete-key" onclick="pinDelete()">⌫</button>
+    </div>
+    <div class="err-msg" id="pinError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="appScreen">
+  <div class="app-header">
+    <div class="header-info">
+      <div class="app-title">💰 Ma Cotisation</div>
+      <div class="app-sub" id="appSub">Chargement...</div>
+    </div>
+    <button class="logout-btn" onclick="logout()" title="Verrouiller">🔒</button>
+  </div>
+
+  <div class="app-content">
+
+    <!-- RÉSUMÉ -->
+    <div class="tab-panel active" id="panel-summary">
+      <div class="balance-card">
+        <div class="bal-lbl">Solde total du compte</div>
+        <div class="bal-amt" id="balAmt">0</div>
+        <div class="bal-curr" id="balCurr">FCFA</div>
+      </div>
+      <div class="shares-grid">
+        <div class="share-card me-card">
+          <div class="share-badge">👤</div>
+          <div class="share-name" id="meLabel">Moi</div>
+          <div class="share-amt" id="meAmt">0</div>
+          <div class="share-pill" id="mePct">0%</div>
+        </div>
+        <div class="share-card brother-card">
+          <div class="share-badge">👨</div>
+          <div class="share-name" id="brLabel">Mon frère</div>
+          <div class="share-amt" id="brAmt">0</div>
+          <div class="share-pill" id="brPct">0%</div>
+        </div>
+      </div>
+      <div class="prog-card">
+        <div class="prog-labels">
+          <span class="me-c" id="pLblMe">Moi</span>
+          <span class="br-c" id="pLblBr">Mon frère</span>
+        </div>
+        <div class="prog-bar">
+          <div class="prog-me" id="progMe" style="width:50%"></div>
+          <div class="prog-br" id="progBr" style="width:50%"></div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" id="sCount">0</div>
+          <div class="stat-lbl">Dépôts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="sWeeks">0</div>
+          <div class="stat-lbl">Semaines</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="sAvg">0</div>
+          <div class="stat-lbl">Moy/dépôt</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AJOUTER -->
+    <div class="tab-panel" id="panel-add">
+      <div class="add-card">
+        <div class="form-group">
+          <label>Qui a déposé ?</label>
+          <div class="who-toggle">
+            <button class="who-btn me active" id="whoMe" onclick="selectWho('me')">
+              <span class="wi">👤</span><span id="whoMeN">Moi</span>
+            </button>
+            <button class="who-btn brother" id="whoBr" onclick="selectWho('brother')">
+              <span class="wi">👨</span><span id="whoBrN">Mon frère</span>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Montant déposé</label>
+          <div class="amt-wrap">
+            <span class="curr-pfx" id="aCurrPfx">FCFA</span>
+            <input type="number" id="addAmt" placeholder="0" inputmode="decimal" min="1" step="any">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Date du dépôt</label>
+          <input type="date" id="addDate">
+        </div>
+        <div class="form-group">
+          <label>Note (facultatif)</label>
+          <input type="text" id="addNote" placeholder="Ex: cotisation semaine 24">
+        </div>
+        <button class="btn btn-primary" onclick="submitDeposit()">✓ Enregistrer le dépôt</button>
+        <div class="err-msg" id="addError"></div>
+      </div>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div class="tab-panel" id="panel-history">
+      <div id="histList"></div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-summary" onclick="switchTab('summary')">
+      <span class="tab-icon">📊</span><span>Résumé</span>
+    </button>
+    <button class="tab-btn" id="tab-add" onclick="switchTab('add')">
+      <span class="tab-icon">➕</span><span>Ajouter</span>
+    </button>
+    <button class="tab-btn" id="tab-history" onclick="switchTab('history')">
+      <span class="tab-icon">📋</span><span>Historique</span>
+    </button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const S = { pin: null, data: null, who: 'me' };
+
+async function init() {
+  try {
+    const r = await fetch('/api/get-data');
+    const info = await r.json();
+    hide('loadingOverlay');
+    if (!info.hasPin) show('setupScreen'); else show('pinScreen');
+  } catch { hide('loadingOverlay'); show('setupScreen'); }
+}
+
+async function submitSetup() {
+  const nameMe = gv('setupNameMe').trim();
+  const nameBrother = gv('setupNameBrother').trim();
+  const pin = gv('setupPin').trim();
+  const pinC = gv('setupPinConfirm').trim();
+  const currency = gv('setupCurrency');
+  setErr('setupError', '');
+  if (!nameMe || !nameBrother) return setErr('setupError', 'Entrez les deux prénoms.');
+  if (!/^\d{4}$/.test(pin)) return setErr('setupError', 'Le PIN doit être exactement 4 chiffres.');
+  if (pin !== pinC) return setErr('setupError', 'Les deux PINs ne correspondent pas.');
+  showLoad();
+  try {
+    const r = await fetch('/api/setup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pin, nameMe, nameBrother, currency}) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Erreur serveur');
+    S.pin = pin; S.data = data; hideLoad(); mountApp();
+  } catch(e) { hideLoad(); setErr('setupError', e.message); }
+}
+
+let pinBuf = '';
+function pinPress(d) {
+  if (pinBuf.length >= 4) return;
+  pinBuf += d; drawDots();
+  if (pinBuf.length === 4) setTimeout(verifyPin, 180);
+}
+function pinDelete() { pinBuf = pinBuf.slice(0,-1); drawDots(); setErr('pinError',''); }
+function drawDots() { for (let i=0;i<4;i++) document.getElementById('dot'+i).classList.toggle('filled', i < pinBuf.length); }
+
+async function verifyPin() {
+  showLoad();
+  try {
+    const r = await fetch('/api/get-data?pin=' + encodeURIComponent(pinBuf));
+    const data = await r.json();
+    if (!r.ok) { hideLoad(); pinBuf=''; drawDots(); setErr('pinError','❌ Code PIN incorrect.'); return; }
+    S.pin = pinBuf; S.data = data; hideLoad(); mountApp();
+  } catch { hideLoad(); pinBuf=''; drawDots(); setErr('pinError','Erreur de connexion.'); }
+}
+
+function mountApp() {
+  hide('setupScreen'); hide('pinScreen'); show('appScreen');
+  const d = S.data;
+  setTxt('appSub', d.members.me + ' & ' + d.members.brother);
+  setTxt('meLabel', d.members.me); setTxt('brLabel', d.members.brother);
+  setTxt('whoMeN', d.members.me); setTxt('whoBrN', d.members.brother);
+  setTxt('pLblMe', d.members.me); setTxt('pLblBr', d.members.brother);
+  setTxt('aCurrPfx', d.currency || 'FCFA');
+  document.getElementById('addDate').value = today();
+  refresh();
+}
+
+function logout() { S.pin=null; S.data=null; pinBuf=''; drawDots(); setErr('pinError',''); hide('appScreen'); show('pinScreen'); }
+
+function refresh() {
+  const deps = S.data.deposits || [];
+  const curr = S.data.currency || 'FCFA';
+  const meT = deps.filter(d=>d.who==='me').reduce((s,d)=>s+d.amount, 0);
+  const brT = deps.filter(d=>d.who==='brother').reduce((s,d)=>s+d.amount, 0);
+  const tot = meT + brT;
+  const mePct = tot>0 ? Math.round(meT/tot*100) : 50;
+  const brPct = 100 - mePct;
+  setTxt('balAmt', fmt(tot)); setTxt('balCurr', curr);
+  setTxt('meAmt', fmt(meT)+' '+curr); setTxt('brAmt', fmt(brT)+' '+curr);
+  setTxt('mePct', mePct+'%'); setTxt('brPct', brPct+'%');
+  document.getElementById('progMe').style.width = mePct+'%';
+  document.getElementById('progBr').style.width = brPct+'%';
+  const weeks = new Set(deps.map(d=>{ const dt=new Date(d.date+'T00:00:00'); return dt.getFullYear()+'-W'+isoW(dt); })).size;
+  setTxt('sCount', deps.length); setTxt('sWeeks', weeks||0);
+  setTxt('sAvg', deps.length ? fmt(Math.round(tot/deps.length)) : 0);
+  drawHistory(deps, curr);
+}
+
+function drawHistory(deps, curr) {
+  const el = document.getElementById('histList');
+  if (!deps.length) { el.innerHTML=`<div class="history-empty"><div class="empty-icon">📭</div><div class="empty-title">Aucun dépôt pour l'instant</div><div class="empty-sub">Ajoutez votre premier dépôt depuis l'onglet ➕</div></div>`; return; }
+  const sorted = [...deps].sort((a,b)=> new Date(b.date)-new Date(a.date) || b.createdAt.localeCompare(a.createdAt));
+  const m = S.data.members; let html='', lastMo='';
+  for (const d of sorted) {
+    const dt = new Date(d.date+'T00:00:00');
+    const mo = dt.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    if (mo!==lastMo) { html+=`<div class="hist-month">${mo}</div>`; lastMo=mo; }
+    const name = d.who==='me' ? m.me : m.brother;
+    const init = name.charAt(0).toUpperCase();
+    const ds = dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+    html+=`<div class="dep-item">
+      <div class="dep-av ${d.who}">${init}</div>
+      <div class="dep-info">
+        <div class="dep-who">${name}</div>
+        <div class="dep-date">${ds}</div>
+        ${d.note?`<div class="dep-note">${esc(d.note)}</div>`:''}
+      </div>
+      <div class="dep-right">
+        <div class="dep-amt ${d.who}">+${fmt(d.amount)}</div>
+        <div class="dep-curr">${curr}</div>
+      </div>
+      <button class="del-btn" onclick="delDeposit('${d.id}')">🗑</button>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function selectWho(who) {
+  S.who = who;
+  document.getElementById('whoMe').classList.toggle('active', who==='me');
+  document.getElementById('whoBr').classList.toggle('active', who==='brother');
+}
+
+async function submitDeposit() {
+  const amount = parseFloat(gv('addAmt'));
+  const date = gv('addDate');
+  const note = gv('addNote').trim();
+  setErr('addError','');
+  if (!amount || amount<=0) return setErr('addError','Entrez un montant valide (supérieur à 0).');
+  if (!date) return setErr('addError','Sélectionnez une date.');
+  showLoad();
+  try {
+    const r = await fetch('/api/add-deposit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:S.pin,who:S.who,amount,date,note})});
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error||'Erreur serveur');
+    S.data = data; hideLoad();
+    document.getElementById('addAmt').value='';
+    document.getElementById('addNote').value='';
+    document.getElementById('addDate').value=today();
+    refresh(); switchTab('summary'); toast('✓ Dépôt enregistré !');
+  } catch(e) { hideLoad(); setErr('addError', e.message); }
+}
+
+async function delDeposit(id) {
+  if (!confirm('Voulez-vous vraiment supprimer ce dépôt ?')) return;
+  showLoad();
+  try {
+    const r = await fetch('/api/delete-deposit',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:S.pin,id})});
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error||'Erreur serveur');
+    S.data=data; hideLoad(); refresh(); toast('Dépôt supprimé');
+  } catch(e) { hideLoad(); toast('Erreur: '+e.message); }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function fmt(n) { return new Intl.NumberFormat('fr-FR').format(Math.round(n*100)/100); }
+function today() { return new Date().toISOString().slice(0,10); }
+function isoW(d) { const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); t.setUTCDate(t.getUTCDate()+4-(t.getUTCDay()||7)); const y=new Date(Date.UTC(t.getUTCFullYear(),0,1)); return Math.ceil((((t-y)/864e5)+1)/7); }
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function show(id) { document.getElementById(id).classList.add('active'); }
+function hide(id) { document.getElementById(id).classList.remove('active'); }
+function gv(id) { return document.getElementById(id).value; }
+function setTxt(id,t) { document.getElementById(id).textContent=t; }
+function setErr(id,m) { document.getElementById(id).textContent=m; }
+function showLoad() { document.getElementById('loadingOverlay').style.display='flex'; }
+function hideLoad() { document.getElementById('loadingOverlay').style.display='none'; }
+let _tt;
+function toast(msg) { clearTimeout(_tt); document.querySelectorAll('.toast').forEach(e=>e.remove()); const el=document.createElement('div'); el.className='toast'; el.textContent=msg; document.body.appendChild(el); _tt=setTimeout(()=>el.remove(),3000); }
+
+init();
+</script>
+</body>
+</html>
