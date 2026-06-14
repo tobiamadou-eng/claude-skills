@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ma Cotisation</title>
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Cotisation">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    :root{--p:#4F46E5;--pd:#3730A3;--pl:#EEF2FF;--s:#10B981;--sd:#059669;--sl:#D1FAE5;--r:#EF4444;--bg:#F1F5F9;--tx:#0F172A;--tm:#64748B;--bd:#E2E8F0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;max-width:480px;margin:0 auto}
+    .screen{display:none;min-height:100vh}
+    .screen.on{display:flex;flex-direction:column}
+    .auth{background:linear-gradient(160deg,#4F46E5,#3730A3 60%,#1E1B6E);align-items:center;justify-content:center;padding:1.5rem}
+    .card{background:#fff;border-radius:24px;padding:2rem 1.75rem;width:100%;max-width:360px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+    .logo{font-size:3rem;text-align:center;margin-bottom:.5rem}
+    .ttl{font-size:1.5rem;font-weight:800;text-align:center;margin-bottom:.25rem}
+    .sub{font-size:.875rem;color:var(--tm);text-align:center;margin-bottom:1.75rem}
+    .fg{margin-bottom:1rem}
+    label{display:block;font-size:.75rem;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
+    input,select{width:100%;padding:.8rem 1rem;border:2px solid var(--bd);border-radius:12px;font-size:1rem;color:var(--tx);background:#fff;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+    input:focus,select:focus{outline:none;border-color:var(--p)}
+    .btn{width:100%;padding:.9rem;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .15s}
+    .btn-p{background:var(--p);color:#fff}.btn-p:active{transform:scale(.97)}
+    .btn-o{background:var(--pl);color:var(--p);margin-top:.75rem}
+    .hr{height:1px;background:var(--bd);margin:1rem 0}
+    .hint{font-size:.75rem;color:var(--tm);background:#F8FAFC;padding:.75rem;border-radius:10px;margin-bottom:1rem;line-height:1.5}
+    .code-box{background:#F8FAFC;border:2px dashed var(--bd);border-radius:12px;padding:1rem;text-align:center;margin-bottom:1rem}
+    .code-val{font-size:.9rem;font-weight:700;color:var(--p);word-break:break-all;font-family:monospace;line-height:1.6}
+    .err{color:var(--r);font-size:.8rem;text-align:center;margin-top:.5rem;min-height:1.2em}
+    .hdr{background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;padding:1rem 1.25rem;padding-top:calc(1rem + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between}
+    .htitle{font-size:1.125rem;font-weight:800}
+    .hsub{font-size:.75rem;opacity:.75;margin-top:1px}
+    .icobtn{background:rgba(255,255,255,.18);border:none;color:#fff;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+    .cnt{flex:1;padding:1rem;padding-bottom:calc(5rem + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .tbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid var(--bd);display:flex;padding:.5rem 0;padding-bottom:calc(.5rem + env(safe-area-inset-bottom));z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+    .tbtn{flex:1;border:none;background:transparent;padding:.4rem 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.65rem;font-weight:600;color:var(--tm)}
+    .tbtn.on{color:var(--p)}
+    .tico{font-size:1.4rem}
+    .panel{display:none}.panel.on{display:block}
+    .balcard{background:linear-gradient(135deg,var(--p),var(--pd));border-radius:16px;padding:1.75rem 1.5rem;color:#fff;margin-bottom:1rem;text-align:center;position:relative;overflow:hidden}
+    .balcard::before{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:rgba(255,255,255,.08);border-radius:50%}
+    .ballbl{font-size:.75rem;opacity:.8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem}
+    .balamt{font-size:2.75rem;font-weight:800;line-height:1;letter-spacing:-.02em}
+    .balcu{font-size:.875rem;opacity:.7;margin-top:.3rem}
+    .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+    .sc{background:#fff;border-radius:14px;padding:1rem .875rem;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+    .sbdg{font-size:1.25rem;margin-bottom:.4rem}
+    .snm{font-size:.7rem;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem}
+    .samt{font-size:1.1rem;font-weight:800;margin-bottom:.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .spill{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px}
+    .sc.me .samt{color:var(--p)}.sc.me .spill{background:var(--pl);color:var(--p)}
+    .sc.br .samt{color:var(--sd)}.sc.br .spill{background:var(--sl);color:var(--sd)}
+    .pgcard{background:#fff;border-radius:14px;padding:1rem;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:.75rem}
+    .pglbls{display:flex;justify-content:space-between;font-size:.75rem;font-weight:600;margin-bottom:.5rem}
+    .pglbls .mc{color:var(--p)}.pglbls .bc{color:var(--sd)}
+    .pgbar{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;display:flex}
+    .pgm{background:var(--p);transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .pgb{background:var(--s);transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .srow{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+    .stc{background:#fff;border-radius:12px;padding:.875rem .5rem;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+    .stv{font-size:1.2rem;font-weight:800;color:var(--p)}
+    .stl{font-size:.6rem;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+    .acard{background:#fff;border-radius:16px;padding:1.25rem;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+    .wtog{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+    .wbtn{padding:1rem .5rem;border:2.5px solid var(--bd);border-radius:14px;background:#fff;cursor:pointer;font-weight:700;font-size:.9rem;text-align:center;color:var(--tm);transition:all .15s}
+    .wi{font-size:1.5rem;display:block;margin-bottom:4px}
+    .wbtn.me.on{background:var(--pl);border-color:var(--p);color:var(--p)}
+    .wbtn.br.on{background:var(--sl);border-color:var(--sd);color:var(--sd)}
+    .aw{position:relative}
+    .acp{position:absolute;left:1rem;top:50%;transform:translateY(-50%);font-weight:700;color:var(--tm);font-size:.875rem;pointer-events:none}
+    .aw input{padding-left:4rem;font-size:1.4rem;font-weight:700}
+    .hemp{text-align:center;padding:3rem 1rem;color:var(--tm)}
+    .hmo{font-size:.7rem;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin:1rem 0 .5rem;padding-left:4px}
+    .hmo:first-child{margin-top:0}
+    .di{background:#fff;border-radius:14px;padding:.875rem 1rem;margin-bottom:.6rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+    .dav{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;flex-shrink:0}
+    .dav.me{background:var(--pl);color:var(--p)}.dav.br{background:var(--sl);color:var(--sd)}
+    .din{flex:1;min-width:0}
+    .dwho{font-weight:700;font-size:.9rem}
+    .ddt{font-size:.72rem;color:var(--tm);margin-top:2px}
+    .dnt{font-size:.72rem;color:var(--tm);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dri{text-align:right;flex-shrink:0}
+    .dam{font-weight:800;font-size:1rem}
+    .dam.me{color:var(--p)}.dam.br{color:var(--sd)}
+    .dcu{font-size:.65rem;color:var(--tm)}
+    .ddb{background:none;border:none;color:#CBD5E1;cursor:pointer;padding:6px;border-radius:8px;font-size:1rem;flex-shrink:0}
+    .ddb:active{color:var(--r)}
+    .lov{position:fixed;inset:0;background:rgba(255,255,255,.85);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000}
+    .sp{width:44px;height:44px;border:4px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .toast{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;padding:.7rem 1.5rem;border-radius:100px;font-size:.875rem;font-weight:500;z-index:500;white-space:nowrap;animation:tup .25s ease}
+    @keyframes tup{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748B'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .875rem center;background-size:1.2em;padding-right:2.5rem}
+  </style>
+</head>
+<body>
+
+<div class="lov" id="lov"><div class="sp"></div></div>
+
+<!-- SETUP -->
+<div class="screen auth" id="sSetup">
+  <div class="card">
+    <div class="logo">💰</div>
+    <div class="ttl">Bienvenue !</div>
+    <div class="sub">Créez votre espace de cotisation</div>
+    <div class="fg"><label>Votre prénom</label><input type="text" id="sMe" placeholder="Ex: Tobias" autocomplete="off"></div>
+    <div class="fg"><label>Prénom de votre frère</label><input type="text" id="sBr" placeholder="Ex: Didier" autocomplete="off"></div>
+    <div class="fg">
+      <label>Devise</label>
+      <select id="sCurr">
+        <option value="FCFA">FCFA — Franc CFA</option>
+        <option value="XAF">XAF — Franc CFA (BEAC)</option>
+        <option value="€">€ — Euro</option>
+        <option value="$">$ — Dollar</option>
+        <option value="CHF">CHF — Franc suisse</option>
+        <option value="MAD">MAD — Dirham marocain</option>
+      </select>
+    </div>
+    <div class="hint">🔒 Un code unique sera généré. Partagez-le avec votre frère pour qu'il puisse accéder à l'app depuis son iPhone.</div>
+    <button class="btn btn-p" onclick="createVault()">Créer mon espace →</button>
+    <div class="hr"></div>
+    <div style="text-align:center;font-size:.8rem;color:var(--tm);margin-bottom:.5rem">Vous avez déjà un code ?</div>
+    <button class="btn btn-o" onclick="show('sJoin')">Rejoindre un espace existant</button>
+    <div class="err" id="errSetup"></div>
+  </div>
+</div>
+
+<!-- REJOINDRE -->
+<div class="screen auth" id="sJoin">
+  <div class="card">
+    <div class="logo">🔗</div>
+    <div class="ttl">Rejoindre</div>
+    <div class="sub">Entrez le code partagé par votre frère</div>
+    <div class="fg"><label>Code de l'espace</label><input type="text" id="joinCode" placeholder="Collez le code ici" autocomplete="off" style="font-family:monospace;font-size:.85rem"></div>
+    <button class="btn btn-p" onclick="joinVault()">Rejoindre →</button>
+    <button class="btn btn-o" onclick="show('sSetup')">← Créer un nouvel espace</button>
+    <div class="err" id="errJoin"></div>
+  </div>
+</div>
+
+<!-- CODE À PARTAGER -->
+<div class="screen auth" id="sCode">
+  <div class="card">
+    <div class="logo">🎉</div>
+    <div class="ttl">Espace créé !</div>
+    <div class="sub">Partagez ce code avec votre frère via WhatsApp ou SMS</div>
+    <div class="code-box">
+      <div style="font-size:.7rem;color:var(--tm);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700">Votre code d'accès</div>
+      <div class="code-val" id="shareCode">—</div>
+    </div>
+    <button class="btn btn-p" onclick="copyCode()">📋 Copier le code</button>
+    <div class="hint" style="margin-top:.75rem">⚠️ Sauvegardez ce code. C'est votre seul moyen d'accéder depuis un autre appareil.</div>
+    <button class="btn btn-o" onclick="enterApp()">Continuer vers l'application →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="sApp">
+  <div class="hdr">
+    <div><div class="htitle">💰 Ma Cotisation</div><div class="hsub" id="appSub">…</div></div>
+    <button class="icobtn" onclick="showCode()" title="Mon code">⚙️</button>
+  </div>
+  <div class="cnt">
+    <!-- RÉSUMÉ -->
+    <div class="panel on" id="pSum">
+      <div class="balcard">
+        <div class="ballbl">Solde total du compte</div>
+        <div class="balamt" id="balAmt">0</div>
+        <div class="balcu" id="balCu">FCFA</div>
+      </div>
+      <div class="sgrid">
+        <div class="sc me"><div class="sbdg">👤</div><div class="snm" id="lblMe">Moi</div><div class="samt" id="amtMe">0</div><div class="spill" id="pctMe">0%</div></div>
+        <div class="sc br"><div class="sbdg">👨</div><div class="snm" id="lblBr">Frère</div><div class="samt" id="amtBr">0</div><div class="spill" id="pctBr">0%</div></div>
+      </div>
+      <div class="pgcard">
+        <div class="pglbls"><span class="mc" id="pgMe">Moi</span><span class="bc" id="pgBr">Frère</span></div>
+        <div class="pgbar"><div class="pgm" id="pgmBar" style="width:50%"></div><div class="pgb" id="pgbBar" style="width:50%"></div></div>
+      </div>
+      <div class="srow">
+        <div class="stc"><div class="stv" id="stN">0</div><div class="stl">Dépôts</div></div>
+        <div class="stc"><div class="stv" id="stW">0</div><div class="stl">Semaines</div></div>
+        <div class="stc"><div class="stv" id="stA">0</div><div class="stl">Moy/dépôt</div></div>
+      </div>
+    </div>
+    <!-- AJOUTER -->
+    <div class="panel" id="pAdd">
+      <div class="acard">
+        <div class="fg"><label>Qui a déposé ?</label>
+          <div class="wtog">
+            <button class="wbtn me on" id="wMe" onclick="selWho('me')"><span class="wi">👤</span><span id="wMeN">Moi</span></button>
+            <button class="wbtn br" id="wBr" onclick="selWho('br')"><span class="wi">👨</span><span id="wBrN">Mon frère</span></button>
+          </div>
+        </div>
+        <div class="fg"><label>Montant</label><div class="aw"><span class="acp" id="acp">FCFA</span><input type="number" id="aAmt" placeholder="0" inputmode="decimal" min="1" step="any"></div></div>
+        <div class="fg"><label>Date</label><input type="date" id="aDt"></div>
+        <div class="fg"><label>Note (facultatif)</label><input type="text" id="aNt" placeholder="Ex: cotisation semaine 24"></div>
+        <button class="btn btn-p" onclick="addDep()">✓ Enregistrer le dépôt</button>
+        <div class="err" id="errAdd"></div>
+      </div>
+    </div>
+    <!-- HISTORIQUE -->
+    <div class="panel" id="pHist"><div id="histList"></div></div>
+  </div>
+  <div class="tbar">
+    <button class="tbtn on" id="t-sum" onclick="tab('sum')"><span class="tico">📊</span><span>Résumé</span></button>
+    <button class="tbtn" id="t-add" onclick="tab('add')"><span class="tico">➕</span><span>Ajouter</span></button>
+    <button class="tbtn" id="t-hist" onclick="tab('hist')"><span class="tico">📋</span><span>Historique</span></button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const API='https://jsonblob.com/api/jsonBlob';
+const LS='cotisation_id';
+let D=null,WHO='me';
+
+async function init(){
+  const id=localStorage.getItem(LS);
+  if(!id){hideLoad();show('sSetup');return;}
+  try{D=await get(id);hideLoad();mountApp();}
+  catch{hideLoad();localStorage.removeItem(LS);show('sSetup');}
+}
+
+async function createVault(){
+  const me=gv('sMe').trim(),br=gv('sBr').trim(),curr=gv('sCurr');
+  setErr('errSetup','');
+  if(!me||!br)return setErr('errSetup','Entrez les deux prénoms.');
+  showLoad();
+  try{
+    D={members:{me,brother:br},currency:curr,deposits:[],createdAt:new Date().toISOString()};
+    const id=await create(D);
+    localStorage.setItem(LS,id);
+    hideLoad();
+    $('shareCode').textContent=id;
+    show('sCode');
+  }catch{hideLoad();setErr('errSetup','Erreur réseau. Réessayez.');}
+}
+
+async function joinVault(){
+  const code=gv('joinCode').trim();
+  setErr('errJoin','');
+  if(!code)return setErr('errJoin','Collez le code fourni par votre frère.');
+  showLoad();
+  try{D=await get(code);localStorage.setItem(LS,code);hideLoad();mountApp();}
+  catch{hideLoad();setErr('errJoin','Code invalide. Vérifiez et réessayez.');}
+}
+
+function copyCode(){
+  const c=$('shareCode').textContent;
+  if(navigator.clipboard){navigator.clipboard.writeText(c).then(()=>toast('✓ Code copié !'));}
+  else{prompt('Copiez ce code :',c);}
+}
+
+function enterApp(){show('sApp');refreshUI();}
+
+function showCode(){
+  const id=localStorage.getItem(LS);
+  if(id){$('shareCode').textContent=id;show('sCode');}
+}
+
+function mountApp(){
+  $('appSub').textContent=D.members.me+' & '+D.members.brother;
+  $('lblMe').textContent=D.members.me; $('lblBr').textContent=D.members.brother;
+  $('pgMe').textContent=D.members.me; $('pgBr').textContent=D.members.brother;
+  $('wMeN').textContent=D.members.me; $('wBrN').textContent=D.members.brother;
+  $('acp').textContent=D.currency||'FCFA';
+  $('aDt').value=today();
+  show('sApp');refreshUI();
+}
+
+function refreshUI(){
+  const deps=D.deposits||[],curr=D.currency||'FCFA';
+  const meT=deps.filter(d=>d.who==='me').reduce((s,d)=>s+d.amount,0);
+  const brT=deps.filter(d=>d.who==='br').reduce((s,d)=>s+d.amount,0);
+  const tot=meT+brT,mePct=tot>0?Math.round(meT/tot*100):50,brPct=100-mePct;
+  $('balAmt').textContent=fmt(tot); $('balCu').textContent=curr;
+  $('amtMe').textContent=fmt(meT)+' '+curr; $('amtBr').textContent=fmt(brT)+' '+curr;
+  $('pctMe').textContent=mePct+'%'; $('pctBr').textContent=brPct+'%';
+  $('pgmBar').style.width=mePct+'%'; $('pgbBar').style.width=brPct+'%';
+  const wks=new Set(deps.map(d=>{const dt=new Date(d.date+'T00:00:00');return dt.getFullYear()+'-W'+isoW(dt);})).size;
+  $('stN').textContent=deps.length; $('stW').textContent=wks||0;
+  $('stA').textContent=deps.length?fmt(Math.round(tot/deps.length)):0;
+  drawHist(deps,curr);
+}
+
+function drawHist(deps,curr){
+  const el=$('histList');
+  if(!deps.length){el.innerHTML=`<div class="hemp"><div style="font-size:3.5rem;margin-bottom:.75rem">📭</div><div style="font-size:1rem;font-weight:600;color:#0F172A;margin-bottom:.25rem">Aucun dépôt pour l'instant</div><div style="font-size:.8rem">Ajoutez votre premier dépôt depuis l'onglet ➕</div></div>`;return;}
+  const sorted=[...deps].sort((a,b)=>new Date(b.date)-new Date(a.date)||b.createdAt.localeCompare(a.createdAt));
+  const m=D.members;let html='',lastMo='';
+  for(const d of sorted){
+    const dt=new Date(d.date+'T00:00:00');
+    const mo=dt.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    if(mo!==lastMo){html+=`<div class="hmo">${mo}</div>`;lastMo=mo;}
+    const name=d.who==='me'?m.me:m.brother;
+    const init=name.charAt(0).toUpperCase();
+    const ds=dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+    const cls=d.who==='me'?'me':'br';
+    html+=`<div class="di"><div class="dav ${cls}">${init}</div><div class="din"><div class="dwho">${name}</div><div class="ddt">${ds}</div>${d.note?`<div class="dnt">${esc(d.note)}</div>`:''}</div><div class="dri"><div class="dam ${cls}">+${fmt(d.amount)}</div><div class="dcu">${curr}</div></div><button class="ddb" onclick="delDep('${d.id}')">🗑</button></div>`;
+  }
+  el.innerHTML=html;
+}
+
+function selWho(w){WHO=w;$('wMe').classList.toggle('on',w==='me');$('wBr').classList.toggle('on',w==='br');}
+
+async function addDep(){
+  const amt=parseFloat(gv('aAmt')),dt=gv('aDt'),nt=gv('aNt').trim();
+  setErr('errAdd','');
+  if(!amt||amt<=0)return setErr('errAdd','Entrez un montant valide.');
+  if(!dt)return setErr('errAdd','Sélectionnez une date.');
+  const dep={id:'dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),who:WHO,amount:Math.round(amt*100)/100,date:dt,note:nt,createdAt:new Date().toISOString()};
+  D.deposits=[...(D.deposits||[]),dep];
+  showLoad();
+  try{await save();hideLoad();$('aAmt').value='';$('aNt').value='';$('aDt').value=today();refreshUI();tab('sum');toast('✓ Dépôt enregistré !');}
+  catch{D.deposits.pop();hideLoad();setErr('errAdd','Erreur réseau. Réessayez.');}
+}
+
+async function delDep(id){
+  if(!confirm('Supprimer ce dépôt ?'))return;
+  const prev=D.deposits;D.deposits=prev.filter(d=>d.id!==id);
+  showLoad();
+  try{await save();hideLoad();refreshUI();toast('Dépôt supprimé');}
+  catch{D.deposits=prev;hideLoad();toast('Erreur réseau.');}
+}
+
+async function create(data){
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  if(!r.ok)throw new Error('failed');
+  const loc=r.headers.get('Location')||'';
+  const id=loc.split('/').pop();
+  if(!id)throw new Error('no id');
+  return id;
+}
+async function get(id){const r=await fetch(`${API}/${id}`);if(!r.ok)throw new Error('not found');return r.json();}
+async function save(){const id=localStorage.getItem(LS);const r=await fetch(`${API}/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(D)});if(!r.ok)throw new Error('save failed');}
+
+function tab(t){['sum','add','hist'].forEach(x=>{$('t-'+x).classList.toggle('on',x===t);$('p'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('on',x===t);});}
+function fmt(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n*100)/100);}
+function today(){return new Date().toISOString().slice(0,10);}
+function isoW(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));t.setUTCDate(t.getUTCDate()+4-(t.getUTCDay()||7));const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil((((t-y)/864e5)+1)/7);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');}
+function $(id){return document.getElementById(id);}
+function gv(id){return $(id).value;}
+function setErr(id,m){$(id).textContent=m;}
+function showLoad(){$('lov').style.display='flex';}
+function hideLoad(){$('lov').style.display='none';}
+let _tt;
+function toast(msg){clearTimeout(_tt);document.querySelectorAll('.toast').forEach(e=>e.remove());const el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);_tt=setTimeout(()=>el.remove(),3000);}
+
+init();
+</script>
+</body>
+</html>
