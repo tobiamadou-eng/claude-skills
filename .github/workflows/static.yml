@@ -37,6 +37,11 @@ jobs:
       - name: Build docs
         run: mkdocs build
 
+      - name: Add cotisation app to site
+        run: |
+          mkdir -p site/cotisation
+          cp docs/index.html site/cotisation/index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
